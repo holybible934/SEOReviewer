@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/holybible934/SEOReviewer/issues"
   },
-  "homepage": "https://github.com/holybible934/SEOReviewer#readme"
+  "homepage": "https://github.com/holybible934/SEOReviewer#readme",
+  "dependencies": {
+    "express": "^4.16.2"
+  }
 }
