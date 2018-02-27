@@ -4,7 +4,8 @@ var ruleCount = 5;
 for (i = 0;i < ruleCount; i++) {
   rules.push(false);
 }
-var StrongTagLimit = 15;
+var strongTagLimit = 15;
+var strongTagCount = 0, h1TagCount = 0;
 
 // ReadStream handler
 var lineBuf = [];
@@ -35,7 +36,6 @@ rl.on('line', (line) => {
   switch (line.trim()) {
     case 'rule1':
       rules[0] = true;
-      console.log('rule1 is set');
       break;
     case 'rule2':
       rules[1] = true;
@@ -56,6 +56,9 @@ rl.on('line', (line) => {
 }).on('close', function() {
   console.log('Input is finished. Start scanning');
   lineBuf.forEach(Scanning);
+  if (h1TagCount > 1) {
+    console.log('This HTML has more than one <h1> tag');
+  }
 });
 
 
@@ -74,7 +77,7 @@ function Scanning(line, index) {
     CountStrongTags(line);
   }
   if (rules[4]) {
-    TooManyH1(line);
+    CountH1Tag(line);
   }
 }
 
@@ -95,6 +98,7 @@ function CountStrongTags(line) {
   console.log('CountStrongTags');
 }
 
-function TooManyH1(line) {
-  console.log('TooManyH1');
+function CountH1Tag(line) {
+  if (line.toUpperCase().includes('<H1>')) {
+    h1TagCount++;
 }
