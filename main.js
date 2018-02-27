@@ -81,7 +81,7 @@ rl.on('line', (line) => {
 // Scan each line from ReadStream with applied rules
 function Scanning(line, index) {
   if (rules[0]) {
-    ImgWithoutAlt(line);
+    ImgWithoutAlt(line, index);
   }
   if (rules[1]) {
     HrefWithoutRel(line);
@@ -97,8 +97,12 @@ function Scanning(line, index) {
   }
 }
 
-function ImgWithoutAlt(line) {
-  //console.log('ImgWithoutAlt - Check image without alt attribute');
+function ImgWithoutAlt(line, index) {
+  if ((line.toUpperCase().includes('<IMG')) && (line.includes('/>'))) {
+    if (!line.toUpperCase().includes('ALT=')) {
+      console.log(`Line#${index+1}: <img> tag without alt attribute`);
+    }
+  }
 }
 
 function HrefWithoutRel(line) {
