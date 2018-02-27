@@ -98,7 +98,7 @@ function Scanning(line, index) {
 }
 
 function ImgWithoutAlt(line, index) {
-  if ((line.toUpperCase().includes('<IMG')) && (line.includes('/>'))) {
+  if ((line.toUpperCase().includes('<IMG')) && (line.includes('/>') || line.toUpperCase().includes('</IMG>'))) {
     if (!line.toUpperCase().includes('ALT=')) {
       console.log(`Line#${index+1}: <img> tag without alt attribute`);
     }
