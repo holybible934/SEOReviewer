@@ -16,7 +16,7 @@ var h1TagCount = 0;
 
 // ReadStream handler
 var lineBuf = [];
-var lineCount = 0;
+
 const readFileLine = require('readline');
 const fileStream =  require('fs');
 const filerl = readFileLine.createInterface({
@@ -25,7 +25,6 @@ const filerl = readFileLine.createInterface({
 });
 filerl.on('line', (line) => {
   lineBuf.push(line);
-  lineCount++;
 }).on('close', () => {
 });
 
@@ -61,6 +60,11 @@ rl.on('line', (line) => {
       rules[4] = true;
       console.log('rule5 is applied');
       break;
+    case 'ALL':
+      for (i = 0;i < ruleCount; i++) {
+        rules[i] = true;
+      }
+      break;
     case '.':
       rl.close();
       break;
@@ -69,7 +73,8 @@ rl.on('line', (line) => {
   }
 }).on('close', function() {
   console.log('Input is finished. Start scanning');
-  lineBuf.forEach(Scanning);
+  lineBuf.forEach(LineScanning);
+  BlockScanning();
   if (strongTagCount > strongTagLimit) {
     console.log(`Total number of <strong> is ${strongTagCount}, which is more than limit ${strongTagLimit}`);
   }
@@ -78,22 +83,26 @@ rl.on('line', (line) => {
   }
 });
 
-// Scan each line from ReadStream with applied rules
-function Scanning(line, index) {
+// Scan each line from lineBuf with applied rules
+function LineScanning(line, index) {
   if (rules[0]) {
     ImgWithoutAlt(line, index);
   }
   if (rules[1]) {
     HrefWithoutRel(line, index);
   }
-  if (rules[2]) {
-    LackTagsInHeader(line, index);
-  }
   if (rules[3]) {
     CountStrongTags(line);
   }
   if (rules[4]) {
     CountH1Tag(line);
+  }
+}
+
+// Scan blocks in lineBuf with applied rules
+function BlockScanning() {
+  if (rules[2]) {
+    LackTagsInHeader();
   }
 }
 
@@ -113,8 +122,39 @@ function HrefWithoutRel(line, index) {
   }
 }
 
-function LackTagsInHeader(line, index) {
-  //console.log('LackTagsInHeader - Check tags in between <head></head>');
+function LackTagsInHeader() {
+  var headStartLine = 0, headEndLine = 0;
+  var hasTitle = false, hasMetaDesc = false, hasMetaKeywords = false;
+  for (i = 0;i < lineBuf.length; i++) {
+    if (lineBuf[i].toUpperCase().includes('<HEAD')) {
+      headStartLine = i;
+    }
+    if (lineBuf[i].toUpperCase().includes('</HEAD>')) {
+      headEndLine = i;
+      break;
+    }
+  }
+  while (headStartLine < headEndLine) {
+    if (lineBuf[headStartLine].toUpperCase().includes('<TITLE>')) {
+      hasTitle = true;
+    }
+    if (lineBuf[headStartLine].toUpperCase().includes('<META NAME=\"DESCRIPTION\"')) {
+      hasMetaDesc = true;
+    }
+    if (lineBuf[headStartLine].toUpperCase().includes('<META NAME=\"KEYWORDS\"')) {
+      hasMetaKeywords = true;
+    }
+    headStartLine++;
+  }
+  if (!hasTitle) {
+    console.log('This HTML has no <title> tag');
+  }
+  if (!hasMetaDesc) {
+    console.log('This HTML has no <meta name=\"description\"> tag');
+  }
+  if (!hasMetaKeywords) {
+    console.log('This HTML has no <meta name=\"keywords\"> tag');
+  }
 }
 
 function CountStrongTags(line) {
