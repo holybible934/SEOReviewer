@@ -61,6 +61,9 @@ rl.on('line', (line) => {
 }).on('close', function() {
   console.log('Input is finished. Start scanning');
   lineBuf.forEach(Scanning);
+  if (strongTagCount > strongTagLimit) {
+    console.log(`Total number of <strong> is ${strongTagCount}, which is more than limit ${strongTagLimit}`);
+  }
   if (h1TagCount > 1) {
     console.log('This HTML has more than one <h1> tag');
   }
@@ -100,7 +103,9 @@ function LackTagsInHeader(line, index) {
 }
 
 function CountStrongTags(line) {
-  console.log('CountStrongTags');
+  if (line.toUpperCase().includes('<STRONG>')) {
+    strongTagCount++;
+  }
 }
 
 function CountH1Tag(line) {
