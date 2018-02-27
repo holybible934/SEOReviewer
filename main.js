@@ -84,7 +84,7 @@ function Scanning(line, index) {
     ImgWithoutAlt(line, index);
   }
   if (rules[1]) {
-    HrefWithoutRel(line);
+    HrefWithoutRel(line, index);
   }
   if (rules[2]) {
     LackTagsInHeader(line, index);
@@ -105,8 +105,12 @@ function ImgWithoutAlt(line, index) {
   }
 }
 
-function HrefWithoutRel(line) {
-  //console.log('HrefWithoutRel - Check a href link without rel attribute');
+function HrefWithoutRel(line, index) {
+  if ((line.toUpperCase().includes('<A')) && (line.includes('/>') || line.toUpperCase().includes('</A>'))) {
+    if (!line.toUpperCase().includes('REL=')) {
+      console.log(`Line#${index+1}: <a> tag without rel attribute`);
+    }
+  }
 }
 
 function LackTagsInHeader(line, index) {
