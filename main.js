@@ -1,11 +1,18 @@
 var inputStreamName = process.argv[2]; // Config Input Stream from the 2nd argument when be executed
+
+// Define number of rules and set non-applied to them all
 var rules = [];
 var ruleCount = 5;
 for (i = 0;i < ruleCount; i++) {
   rules.push(false);
 }
+
+// StrongTag conditions
 var strongTagLimit = 15;
-var strongTagCount = 0, h1TagCount = 0;
+var strongTagCount = 0;
+
+// Number of h1 tag
+var h1TagCount = 0;
 
 // ReadStream handler
 var lineBuf = [];
@@ -30,32 +37,34 @@ var rl = readline.createInterface({
   prompt: '> ',
   terminal: false
 });
-console.log('Type ruleX<ENTER> to execute rule X, where X is 1, 2, 3, 4 or 5.\nThen type any to start scanning.')
+console.log(`Type ruleX<ENTER> to apply rule X, where X no greater than ${ruleCount}.\nThen type . to start scanning.`);
 rl.prompt();
 rl.on('line', (line) => {
   switch (line.trim()) {
     case 'rule1':
       rules[0] = true;
-      console.log('rule1 is set');
+      console.log('rule1 is applied');
       break;
     case 'rule2':
       rules[1] = true;
-      console.log('rule2 is set');
+      console.log('rule2 is applied');
       break;
     case 'rule3':
       rules[2] = true;
-      console.log('rule3 is set');
+      console.log('rule3 is applied');
       break;
     case 'rule4':
       rules[3] = true;
-      console.log('rule4 is set');
+      console.log('rule4 is applied');
       break;
     case 'rule5':
       rules[4] = true;
-      console.log('rule5 is set');
+      console.log('rule5 is applied');
+      break;
+    case '.':
+      rl.close();
       break;
     default:
-      rl.close();
       break;
   }
 }).on('close', function() {
@@ -69,8 +78,7 @@ rl.on('line', (line) => {
   }
 });
 
-
-
+// Scan each line from ReadStream with applied rules
 function Scanning(line, index) {
   if (rules[0]) {
     ImgWithoutAlt(line);
@@ -89,17 +97,16 @@ function Scanning(line, index) {
   }
 }
 
-
 function ImgWithoutAlt(line) {
-  console.log('ImgWithoutAlt - Check image without alt attribute');
+  //console.log('ImgWithoutAlt - Check image without alt attribute');
 }
 
 function HrefWithoutRel(line) {
-  console.log('HrefWithoutRel - Check a href link without rel attribute');
+  //console.log('HrefWithoutRel - Check a href link without rel attribute');
 }
 
 function LackTagsInHeader(line, index) {
-  console.log('LackTagsInHeader - Check tags in between <head></head>');
+  //console.log('LackTagsInHeader - Check tags in between <head></head>');
 }
 
 function CountStrongTags(line) {
