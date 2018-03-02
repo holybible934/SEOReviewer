@@ -1,4 +1,4 @@
-var inputStreamName = process.argv[2]; // Config Input Stream from the 2nd argument when be executed
+var inputStreamName = process.argv[2]; // Specify the source of Input Stream by the 2nd argument when be executed
 
 // Define number of rules and set non-applied to them all
 var rules = [];
@@ -14,21 +14,22 @@ var strongTagCount = 0;
 // Number of h1 tag
 var h1TagCount = 0;
 
-// ReadStream handler
+// Each line of data from ReadStream
 var lineBuf = [];
 
-const readFileLine = require('readline');
-const fileStream =  require('fs');
-const filerl = readFileLine.createInterface({
-  input: fileStream.createReadStream(inputStreamName),
-  crlfDelay: Infinity
-});
-filerl.on('line', (line) => {
-  lineBuf.push(line);
-}).on('close', () => {
-});
+// Input Source hanlding
+if (inputStreamName === undefined) {
+  console.log('Please specify input source when executing!');
+  process.exit(0);
+}
+else if (inputStreamName.startsWith("http://")) {
+  ReadFromHTTPServer();
+}
+else {
+  ReadFromLocalFile();
+}
 
-// Ask users to select which rule(s) shall be applied
+// Main function, ask users to select which rule(s) shall be applied
 var readline = require('readline');
 var rl = readline.createInterface({
   input: process.stdin,
@@ -69,6 +70,8 @@ rl.on('line', (line) => {
       rl.close();
       break;
     default:
+      console.log(line + ' is not a valid input.');
+      console.log(`Type ruleX<ENTER> to apply rule X, where X no greater than ${ruleCount}.\nThen type . to start scanning.`);
       break;
   }
 }).on('close', function() {
@@ -82,6 +85,38 @@ rl.on('line', (line) => {
     console.log('This HTML has more than one <h1> tag');
   }
 });
+
+// Get data from HTTP Server
+function ReadFromHTTPServer() {
+  const readFileLine = require('readline');
+  const http =  require('http');
+  var hostname, port;
+  //find & remove protocol (http, ftp, etc.) and get hostname
+  if (inputStreamName.indexOf("://") > -1) {
+      hostname = inputStreamName.split('/')[2];
+  }
+  else {
+      hostname = inputStreamName.split('/')[0];
+  }
+  // Split domain and port
+  port = hostname.split(':')[1];
+  hostname = hostname.split(':')[0];
+
+}
+
+// Get data from local file
+function ReadFromLocalFile() {
+  const readFileLine = require('readline');
+  const fileStream =  require('fs');
+  const filerl = readFileLine.createInterface({
+    input: fileStream.createReadStream(inputStreamName),
+    crlfDelay: Infinity
+  });
+  filerl.on('line', (line) => {
+    lineBuf.push(line);
+  }).on('close', () => {
+  });
+}
 
 // Scan each line from lineBuf with applied rules
 function LineScanning(line, index) {
@@ -106,6 +141,7 @@ function BlockScanning() {
   }
 }
 
+// Rule1
 function ImgWithoutAlt(line, index) {
   if ((line.toUpperCase().includes('<IMG')) && (line.includes('/>') || line.toUpperCase().includes('</IMG>'))) {
     if (!line.toUpperCase().includes('ALT=')) {
@@ -114,6 +150,7 @@ function ImgWithoutAlt(line, index) {
   }
 }
 
+// Rule2
 function HrefWithoutRel(line, index) {
   if ((line.toUpperCase().includes('<A')) && (line.includes('/>') || line.toUpperCase().includes('</A>'))) {
     if (!line.toUpperCase().includes('REL=')) {
@@ -122,6 +159,7 @@ function HrefWithoutRel(line, index) {
   }
 }
 
+// Rule3
 function LackTagsInHeader() {
   var headStartLine = 0, headEndLine = 0;
   var hasTitle = false, hasMetaDesc = false, hasMetaKeywords = false;
@@ -157,12 +195,14 @@ function LackTagsInHeader() {
   }
 }
 
+// Rule4
 function CountStrongTags(line) {
   if (line.toUpperCase().includes('<STRONG>')) {
     strongTagCount++;
   }
 }
 
+// Rule5
 function CountH1Tag(line) {
   if (line.toUpperCase().includes('<H1')) {
     h1TagCount++;
