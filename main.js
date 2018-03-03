@@ -141,12 +141,23 @@ function OutputToTarget() {
     // To remote
   }
   else {
-    // To local file
+    ToFile();
   }
 }
 
 function ToConsole(line) {
   console.log(line);
+}
+
+// To a specified file
+function ToFile() {
+  const fs = require('fs');
+  const stream = fs.createWriteStream(outputStreamName);
+  stream.setDefaultEncoding('utf8');
+  for (i = 0; i < wsLineBuf.length; i++) {
+     stream.write(wsLineBuf[i] + '\r\n');
+  }
+  stream.end();
 }
 
 // Scan each line from rsLineBuf with applied rules
@@ -196,7 +207,7 @@ function HrefWithoutRel(line, index) {
 function LackTagsInHeader() {
   var headStartLine = 0, headEndLine = 0;
   var hasTitle = false, hasMetaDesc = false, hasMetaKeywords = false;
-  for (i = 0;i < rsLineBuf.length; i++) {
+  for (i = 0; i < rsLineBuf.length; i++) {
     if (rsLineBuf[i].toUpperCase().includes('<HEAD')) {
       headStartLine = i;
     }
