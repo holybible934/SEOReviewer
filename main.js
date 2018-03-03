@@ -1,4 +1,5 @@
 var inputStreamName = process.argv[2]; // Specify the source of Input Stream by the 2nd argument when be executed
+var outputStreamName = process.argv[3]; // Specify the source of Output Stream by the 2nd argument when be executed
 
 // Define number of rules and set non-applied to them all
 var rules = [];
@@ -15,7 +16,10 @@ var strongTagCount = 0;
 var h1TagCount = 0;
 
 // Each line of data from ReadStream
-var lineBuf = [];
+var rsLineBuf = [];
+
+// Each line of data to be sent to WriteStream
+var wsLineBuf = [];
 
 // Input Source hanlding
 if (inputStreamName === undefined) {
@@ -27,6 +31,11 @@ else if (inputStreamName.startsWith("http://")) {
 }
 else {
   ReadFromLocalFile();
+}
+
+// Input Source hanlding
+if (outputStreamName === undefined) {
+  outputStreamName = 'CONSOLE';
 }
 
 // Main function, ask users to select which rule(s) shall be applied
@@ -74,16 +83,21 @@ rl.on('line', (line) => {
       console.log(`Type ruleX<ENTER> to apply rule X, where X no greater than ${ruleCount}.\nThen type . to start scanning.`);
       break;
   }
+  rl.prompt();
 }).on('close', function() {
   console.log('Input is finished. Start scanning');
-  lineBuf.forEach(LineScanning);
+  rsLineBuf.forEach(LineScanning);
   BlockScanning();
   if (strongTagCount > strongTagLimit) {
-    console.log(`Total number of <strong> is ${strongTagCount}, which is more than limit ${strongTagLimit}`);
+    wsLineBuf.push(`Total number of <strong> is ${strongTagCount}, which is more than limit ${strongTagLimit}`);
+    //console.log(`Total number of <strong> is ${strongTagCount}, which is more than limit ${strongTagLimit}`);
   }
   if (h1TagCount > 1) {
-    console.log('This HTML has more than one <h1> tag');
+    wsLineBuf.push('This HTML has more than one <h1> tag');
+    //console.log('This HTML has more than one <h1> tag');
   }
+  OutputToTarget();
+  process.exit(0);
 });
 
 // Get data from HTTP Server
@@ -113,12 +127,29 @@ function ReadFromLocalFile() {
     crlfDelay: Infinity
   });
   filerl.on('line', (line) => {
-    lineBuf.push(line);
+    rsLineBuf.push(line);
   }).on('close', () => {
   });
 }
 
-// Scan each line from lineBuf with applied rules
+// Output data
+function OutputToTarget() {
+  if (outputStreamName == 'CONSOLE') {
+    wsLineBuf.forEach(ToConsole);
+  }
+  else if (outputStreamName.startsWith('http')) {
+    // To remote
+  }
+  else {
+    // To local file
+  }
+}
+
+function ToConsole(line) {
+  console.log(line);
+}
+
+// Scan each line from rsLineBuf with applied rules
 function LineScanning(line, index) {
   if (rules[0]) {
     ImgWithoutAlt(line, index);
@@ -134,7 +165,7 @@ function LineScanning(line, index) {
   }
 }
 
-// Scan blocks in lineBuf with applied rules
+// Scan blocks in rsLineBuf with applied rules
 function BlockScanning() {
   if (rules[2]) {
     LackTagsInHeader();
@@ -145,7 +176,8 @@ function BlockScanning() {
 function ImgWithoutAlt(line, index) {
   if ((line.toUpperCase().includes('<IMG')) && (line.includes('/>') || line.toUpperCase().includes('</IMG>'))) {
     if (!line.toUpperCase().includes('ALT=')) {
-      console.log(`Line#${index+1}: <img> tag without alt attribute`);
+      wsLineBuf.push(`Line#${index+1}: <img> tag without alt attribute`);
+      //console.log(`Line#${index+1}: <img> tag without alt attribute`);
     }
   }
 }
@@ -154,7 +186,8 @@ function ImgWithoutAlt(line, index) {
 function HrefWithoutRel(line, index) {
   if ((line.toUpperCase().includes('<A')) && (line.includes('/>') || line.toUpperCase().includes('</A>'))) {
     if (!line.toUpperCase().includes('REL=')) {
-      console.log(`Line#${index+1}: <a> tag without rel attribute`);
+      wsLineBuf.push(`Line#${index+1}: <a> tag without rel attribute`);
+      //console.log(`Line#${index+1}: <a> tag without rel attribute`);
     }
   }
 }
@@ -163,35 +196,38 @@ function HrefWithoutRel(line, index) {
 function LackTagsInHeader() {
   var headStartLine = 0, headEndLine = 0;
   var hasTitle = false, hasMetaDesc = false, hasMetaKeywords = false;
-  for (i = 0;i < lineBuf.length; i++) {
-    if (lineBuf[i].toUpperCase().includes('<HEAD')) {
+  for (i = 0;i < rsLineBuf.length; i++) {
+    if (rsLineBuf[i].toUpperCase().includes('<HEAD')) {
       headStartLine = i;
     }
-    if (lineBuf[i].toUpperCase().includes('</HEAD>')) {
+    if (rsLineBuf[i].toUpperCase().includes('</HEAD>')) {
       headEndLine = i;
       break;
     }
   }
   while (headStartLine < headEndLine) {
-    if (lineBuf[headStartLine].toUpperCase().includes('<TITLE>')) {
+    if (rsLineBuf[headStartLine].toUpperCase().includes('<TITLE>')) {
       hasTitle = true;
     }
-    if (lineBuf[headStartLine].toUpperCase().includes('<META NAME=\"DESCRIPTION\"')) {
+    if (rsLineBuf[headStartLine].toUpperCase().includes('<META NAME=\"DESCRIPTION\"')) {
       hasMetaDesc = true;
     }
-    if (lineBuf[headStartLine].toUpperCase().includes('<META NAME=\"KEYWORDS\"')) {
+    if (rsLineBuf[headStartLine].toUpperCase().includes('<META NAME=\"KEYWORDS\"')) {
       hasMetaKeywords = true;
     }
     headStartLine++;
   }
   if (!hasTitle) {
-    console.log('This HTML has no <title> tag');
+    wsLineBuf.push('This HTML has no <title> tag');
+    //console.log('This HTML has no <title> tag');
   }
   if (!hasMetaDesc) {
-    console.log('This HTML has no <meta name=\"description\"> tag');
+    wsLineBuf.push('This HTML has no <meta name=\"description\"> tag');
+    //console.log('This HTML has no <meta name=\"description\"> tag');
   }
   if (!hasMetaKeywords) {
-    console.log('This HTML has no <meta name=\"keywords\"> tag');
+    wsLineBuf.push('This HTML has no <meta name=\"keywords\"> tag');
+    //console.log('This HTML has no <meta name=\"keywords\"> tag');
   }
 }
 
