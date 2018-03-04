@@ -115,7 +115,25 @@ function ReadFromHTTPServer() {
   // Split domain and port
   port = hostname.split(':')[1];
   hostname = hostname.split(':')[0];
+  // Connect URL
+  const options = {
+    port: port,
+    hostname: hostname,
+  };
 
+  const req = http.get(options);
+  req.end();
+  req.once('response', (res) => {
+    const readHTTPResLine = require('readline');
+    const httprl = readHTTPResLine.createInterface({
+      input: res,
+      crlfDelay: Infinity
+    });
+    httprl.on('line', (line) => {
+      rsLineBuf.push(line);
+    }).on('close', () => {
+    });
+  });
 }
 
 // Get data from local file
