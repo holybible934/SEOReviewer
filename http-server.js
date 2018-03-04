@@ -19,6 +19,7 @@ server.on('request', (req, res) => {
     res.end('post received');
   }
   else {
+    console.log('A request to get the page');
     const src = fs.createReadStream('./http-server-page.html');
     src.pipe(res);
   }

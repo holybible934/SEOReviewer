@@ -155,8 +155,8 @@ function OutputToTarget() {
   if (outputStreamName == 'CONSOLE') {
     wsLineBuf.forEach(ToConsole);
   }
-  else if (outputStreamName.startsWith('http')) {
-    // To remote
+  else if (outputStreamName.startsWith('http://')) {
+    ToRemote();
   }
   else {
     ToFile();
@@ -165,6 +165,37 @@ function OutputToTarget() {
 
 function ToConsole(line) {
   console.log(line);
+}
+
+function ToRemote() {
+  var http = require('http');
+  //find & remove protocol (http, ftp, etc.) and get hostname
+  if (outputStreamName.indexOf("://") > -1) {
+      hostname = outputStreamName.split('/')[2];
+  }
+  else {
+      hostname = outputStreamName.split('/')[0];
+  }
+  // Split domain and port
+  port = hostname.split(':')[1];
+  hostname = hostname.split(':')[0];
+  var postData = '';
+  for (i = 0; i < wsLineBuf.length; i++) {
+    postData += wsLineBuf[i];
+  }
+  var options = {
+    port: port,
+    hostname: hostname,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/html',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  }
+  // Send POST
+  var postReq = http.request(options);
+  postReq.write(postData);
+  postReq.end();
 }
 
 // To a specified file
