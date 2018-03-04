@@ -5,10 +5,8 @@ const fs = require('fs');
 const server = require('http').createServer();
 
 server.on('request', (req, res) => {
-  fs.readFile('./http-server-page.html', (err, data) => {
-    if (err) throw err;
-    res.end(data);
-  });
+  const src = fs.createReadStream('./http-server-page.html');
+  src.pipe(res);
 });
 
 server.listen(port, hostname, () => {
